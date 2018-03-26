@@ -1,0 +1,12 @@
+.form-input{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  label{
+    display: flex;
+  }
+  input{
+    display: flex;
+  }
+}

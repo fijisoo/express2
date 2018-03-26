@@ -1,0 +1,40 @@
+table{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  thead{
+    display: flex;
+    width: 100%;
+    tr{
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      border-bottom: 1px black solid;
+      th{
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+  tbody{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    tr{
+      width: 100%;
+      display: flex;
+      border-bottom: 1px black solid;
+      th{
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+    :hover{
+      background-color: grey;
+    }
+  }
+}

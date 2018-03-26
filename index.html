@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+<header>
+    <button class="nav-buttons list-btn">List</button>
+    <button class="nav-buttons form-btn">Form</button>
+</header>
+<div class="container">
+    <section class="sections list">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Imie</th>
+                    <th>Nazwisko</th>
+                    <th>Wiek</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div class="pagin"></div>
+    </section>
+    <section class="sections form">
+        <form action="" method="POST" id="formularz">
+            <div class="form-input">
+                <label for="input1">Imie: </label>
+                <input id="input1" type="text" name="imie">
+            </div>
+            <div class="form-input">
+                <label for="input2">Nazwisko: </label>
+                <input id="input2" type="text" name="nazwisko">
+            </div>
+            <div class="form-input">
+                <label for="input3">Wiek: </label>
+                <input id="input3" type="text" name="wiek">
+            </div>
+            <div class="form-input">
+                <label for="input4">Login: </label>
+                <input id="input4" type="text" name="login">
+            </div>
+            <div class="form-input">
+                <label for="input5">Hasuo: </label>
+                <input id="input5" type="text" name="haslo">
+            </div>
+            <button type="submit">Submit</button>
+        </form>
+    </section>
+</div>
+<script src="users.ts"></script>
+<script src="changingPages.js"></script>
+</body>
+
+</html>

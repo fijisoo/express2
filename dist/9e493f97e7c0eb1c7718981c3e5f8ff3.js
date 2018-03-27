@@ -96,6 +96,12 @@ exports.__esModule = true;
 var model_1 = require("./model");
 var user = new model_1.User();
 var pageNumber = 0;
+var tbody = document.querySelector('.table tbody');
+var paginEl = document.querySelector('.pagin');
+var form = document.getElementById('formularz');
+var slider = document.querySelector('.slidecontainer');
+var currentPage = 0;
+var elementsPerPage = 5;
 function getUsersCounter() {
     return fetch('/usersCounter').then(function (response) {
         return response.json().then(function (data) {
@@ -107,10 +113,8 @@ function getUsersCounter() {
 }
 function getUsersPerPage(pageNumber, numberOfElements) {
     numberOfElements = Math.max(1, numberOfElements);
-    // pageNumber = Math.max(1, pageNumber);
     var firstSemafor = numberOfElements * pageNumber;
     var secondSemafor = numberOfElements + numberOfElements * pageNumber;
-    console.log('firstSemafor: ', firstSemafor, 'secondSemafor: ', secondSemafor);
     return fetch("/getUsers?firstSemafor=" + firstSemafor + "&secondSemafor=" + secondSemafor).then(function (response) {
         return response.json().then(function (data) {
             return { response: response, data: data };
@@ -137,6 +141,30 @@ var generateUsersTable = function generateUsersTable(arr, tBodyElement) {
         }
     });
 };
+var generateSlider = function generateSlider() {
+    var input = document.createElement('input');
+    var sliderVal = document.getElementById('slidecontainerval');
+    while (slider.firstChild) {
+        slider.removeChild(slider.firstChild);
+    }
+    input.type = 'range';
+    input.min = '1';
+    getUsersCounter().then(function (res) {
+        input.max = res;
+    });
+    input.value = '1';
+    input.className = 'slider';
+    input.id = 'myRange';
+    input.addEventListener('change', function (ev) {
+        elementsPerPage = parseInt(this.value);
+        sliderVal.value = this.value;
+        showUsers();
+    });
+    // console.log(input);
+    slider.appendChild(input);
+    // console.log(slider);
+};
+window.onload = generateSlider;
 var generatePagination = function generatePagination(counter, numberOfElements, element) {
     var buttonCounter = parseInt(counter) / parseInt(numberOfElements);
     while (element.firstChild) {
@@ -148,24 +176,24 @@ var generatePagination = function generatePagination(counter, numberOfElements, 
         input.innerText = "" + i;
         input.value = "" + i;
         input.addEventListener('click', function (ev) {
-            showUsers(this.value, 4);
+            currentPage = parseInt(this.value);
+            showUsers();
         });
         element.appendChild(input);
     }
 };
-var tbody = document.querySelector('.table tbody');
-var paginEl = document.querySelector('.pagin');
-var showUsers = function showUsers(pageNumber, numberOfElements) {
-    return Promise.all([getUsersCounter(), getUsersPerPage(pageNumber, numberOfElements)]).then(function (res) {
+var showUsers = function showUsers() {
+    return Promise.all([getUsersCounter(), getUsersPerPage(currentPage, elementsPerPage)]).then(function (res) {
         var counter = res[0];
         var usersArr = res[1].data;
         console.log('users Arr :', usersArr);
         generateUsersTable(usersArr, tbody);
-        generatePagination(counter, numberOfElements, paginEl);
+        generatePagination(counter, elementsPerPage, paginEl);
     });
 };
-showUsers(0, 4);
-var form = document.getElementById('formularz');
+showUsers()["catch"](function (err) {
+    return console.log;
+});
 form.addEventListener('submit', function (ev) {
     addNewUser().then(function (response) {
         console.log(response);
@@ -190,10 +218,11 @@ function addNewUser() {
             body: JSON.stringify(data)
         });
     }).then(function (res) {
-        showUsers(0, 4);
+        showUsers();
+        generateSlider();
     });
 }
-},{"./model":6}],8:[function(require,module,exports) {
+},{"./model":6}],13:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -316,5 +345,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[8,3])
+},{}]},{},[13,3])
 //# sourceMappingURL=/9e493f97e7c0eb1c7718981c3e5f8ff3.map

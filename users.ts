@@ -3,6 +3,14 @@ import {User} from './model';
 let user = new User();
 
 let pageNumber = 0;
+let tbody = document.querySelector('.table tbody');
+let paginEl = document.querySelector('.pagin');
+let form = document.getElementById('formularz');
+let slider = document.querySelector('.slidecontainer');
+
+let currentPage = 0;
+let elementsPerPage = 5;
+
 
 function getUsersCounter (): Promise<any>{
     return fetch('/usersCounter')
@@ -15,16 +23,15 @@ function getUsersCounter (): Promise<any>{
 
 function getUsersPerPage (pageNumber: number, numberOfElements: number){
     numberOfElements = Math.max(1, numberOfElements);
-    // pageNumber = Math.max(1, pageNumber);
+
     let firstSemafor = numberOfElements * pageNumber;
     let secondSemafor = numberOfElements + numberOfElements * pageNumber;
-    console.log('firstSemafor: ', firstSemafor, 'secondSemafor: ', secondSemafor);
+
     return fetch(`/getUsers?firstSemafor=${firstSemafor}&secondSemafor=${secondSemafor}`)
         .then(response => response.json()
             .then(data => {return{response, data}}))
         .catch(err => console.log);
 }
-
 
 let generateUsersTable = function (arr, tBodyElement) {
     while (tBodyElement.firstChild) {
@@ -45,6 +52,33 @@ let generateUsersTable = function (arr, tBodyElement) {
     })
 }
 
+let generateSlider = function(){
+
+    let input = document.createElement('input');
+    let sliderVal = document.getElementById('slidecontainerval');
+    while (slider.firstChild) {
+        slider.removeChild(slider.firstChild);
+    }
+    input.type = 'range';
+    input.min = '1';
+    getUsersCounter().then((res)=>{
+        input.max = res;
+    });
+    input.value = '1';
+    input.className = 'slider';
+    input.id = 'myRange';
+    input.addEventListener('change', function (ev){
+        elementsPerPage = parseInt(this.value);
+        sliderVal.value = this.value;
+        showUsers();
+    })
+    // console.log(input);
+    slider.appendChild(input);
+    // console.log(slider);
+}
+
+window.onload = generateSlider;
+
 let generatePagination = function (counter, numberOfElements, element){
     let buttonCounter = parseInt(counter)/parseInt(numberOfElements);
     while (element.firstChild) {
@@ -56,30 +90,28 @@ let generatePagination = function (counter, numberOfElements, element){
         input.innerText = `${i}`;
         input.value = `${i}`;
         input.addEventListener('click', function(ev){
-            showUsers(this.value, 4);
+            currentPage = parseInt(this.value);
+            showUsers();
         } )
         element.appendChild(input);
     }
 }
 
-let tbody = document.querySelector('.table tbody');
-let paginEl = document.querySelector('.pagin');
-
-let showUsers = function (pageNumber, numberOfElements) {
+let showUsers = function () {
     return Promise.all([
         getUsersCounter(),
-        getUsersPerPage(pageNumber,numberOfElements)
+        getUsersPerPage(currentPage,elementsPerPage)
     ]).then((res)=>{
         const counter = res[0];
         const usersArr = res[1].data;
         console.log('users Arr :', usersArr);
         generateUsersTable(usersArr, tbody);
-        generatePagination(counter, numberOfElements, paginEl);
+        generatePagination(counter, elementsPerPage, paginEl);
+
     })
 }
-showUsers(0, 4);
 
-let form = document.getElementById('formularz');
+showUsers().catch(err=>console.log);
 
 form.addEventListener('submit',(ev)=>{
     addNewUser().then((response) => {
@@ -90,7 +122,6 @@ form.addEventListener('submit',(ev)=>{
         })
     event.preventDefault();
 })
-
 
 function addNewUser (): Promise<any>{
     let inputElements = document.querySelectorAll('#formularz input');
@@ -112,7 +143,7 @@ function addNewUser (): Promise<any>{
             body: JSON.stringify(data)
         })
     }).then((res)=>{
-        showUsers(0, 4);
+        showUsers();
+        generateSlider();
     });
-
 }

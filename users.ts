@@ -5,26 +5,92 @@ let user = new User();
 let pageNumber = 0;
 
 function getUsersCounter (): Promise<any>{
-    return fetch('/getUsers')
+    return fetch('/usersCounter')
         .then(response => response.json()
             .then((data)=>{
-                return {response, data};
+                return data;
         }))
-        .then((res)=>{
-            console.log('response code: ', res.response, 'data: ', res.data);
-        })
         .catch(err => console.log);
 }
 
-function getUsersPerPage (pageNumber: number, numberOfElements: number):Promise<any>{
+function getUsersPerPage (pageNumber: number, numberOfElements: number){
     numberOfElements = Math.max(1, numberOfElements);
-    let firstSemafor = 1 + numberOfElements * pageNumber;
+    // pageNumber = Math.max(1, pageNumber);
+    let firstSemafor = numberOfElements * pageNumber;
     let secondSemafor = numberOfElements + numberOfElements * pageNumber;
+    console.log('firstSemafor: ', firstSemafor, 'secondSemafor: ', secondSemafor);
     return fetch(`/getUsers?firstSemafor=${firstSemafor}&secondSemafor=${secondSemafor}`)
         .then(response => response.json()
             .then(data => {return{response, data}}))
         .catch(err => console.log);
 }
+
+
+let generateUsersTable = function (arr, tBodyElement) {
+    while (tBodyElement.firstChild) {
+        tBodyElement.removeChild(tBodyElement.firstChild);
+    }
+    arr.forEach((obj, index)=>{
+        const trElement = document.createElement('tr');
+        const thElement = document.createElement('th');
+        thElement.innerHTML = index;
+        trElement.appendChild(thElement);
+        tBodyElement.appendChild(trElement);
+        for(let i in obj){
+            const thElement = document.createElement('th');
+            thElement.innerHTML = obj[i];
+            trElement.appendChild(thElement);
+            tbody.appendChild(trElement);
+        }
+    })
+}
+
+let generatePagination = function (counter, numberOfElements, element){
+    let buttonCounter = parseInt(counter)/parseInt(numberOfElements);
+    while (element.firstChild) {
+        element.removeChild(element.firstChild);
+    }
+    for(let i = 0; i < buttonCounter; i++){
+        let input = document.createElement('input');
+        input.type = 'button';
+        input.innerText = `${i}`;
+        input.value = `${i}`;
+        input.addEventListener('click', function(ev){
+            showUsers(this.value, 4);
+        } )
+        element.appendChild(input);
+    }
+}
+
+let tbody = document.querySelector('.table tbody');
+let paginEl = document.querySelector('.pagin');
+
+let showUsers = function (pageNumber, numberOfElements) {
+    return Promise.all([
+        getUsersCounter(),
+        getUsersPerPage(pageNumber,numberOfElements)
+    ]).then((res)=>{
+        const counter = res[0];
+        const usersArr = res[1].data;
+        console.log('users Arr :', usersArr);
+        generateUsersTable(usersArr, tbody);
+        generatePagination(counter, numberOfElements, paginEl);
+    })
+}
+showUsers(0, 4);
+
+let form = document.getElementById('formularz');
+
+form.addEventListener('submit',(ev)=>{
+    addNewUser().then((response) => {
+        console.log(response);
+            response.json().then((data) => {
+                console.log('tutaj: ', data);
+            });
+        })
+    event.preventDefault();
+})
+
 
 function addNewUser (): Promise<any>{
     let inputElements = document.querySelectorAll('#formularz input');
@@ -45,72 +111,8 @@ function addNewUser (): Promise<any>{
             },
             body: JSON.stringify(data)
         })
+    }).then((res)=>{
+        showUsers(0, 4);
     });
+
 }
-
-let showUsers = function () {
-    return Promise.all([
-        getUsersCounter().then((res => res.json()),
-        getUsersPerPage(1,1).then((res => res.json())
-    ])
-}
-
-// let showUsers = function (){
-//         let tbody = document.querySelector('.table tbody');
-//         while (tbody.firstChild) {
-//             tbody.removeChild(tbody.firstChild);
-//         }
-//         fetch('/getUsers').then((data)=>{
-//             data.json().then(function (data){
-//                 console.log(JSON.stringify(data));
-//                 let paginDiv = document.querySelector('.pagin');
-//                 let newP = document.createElement('p');
-//                 newP.innerText = '' + data;
-//                 paginDiv.appendChild(newP);
-//             })
-//         })
-//
-//         fetch(`/getUsers/` + pageNumber).then(function (data){
-//             data.json().then(function (data){
-//                 data.forEach((obj, index)=>{
-//                     const trElement = document.createElement('tr');
-//                     const thElement = document.createElement('th');
-//                     thElement.innerHTML = index;
-//                     trElement.appendChild(thElement);
-//                     tbody.appendChild(trElement);
-//                     for(let i in obj){
-//                         const thElement = document.createElement('th');
-//                         thElement.innerHTML = obj[i];
-//                         trElement.appendChild(thElement);
-//                         tbody.appendChild(trElement);
-//                     }
-//                 })
-//             });
-//         })
-// };
-//
-// window.addEventListener("load", showUsers);
-
-let form = document.getElementById('formularz');
-
-
-// function example(currentPage = 0, elementsPerPage = 10) {
-//     elementsPerPage = Math.max(1, elementsPerPage);
-//     Promise.all([
-//         fetch('/usersCount').then((res => res.json())),
-//         fetch('/users?page=' + currentPage + '&elementsPerPage=' + elementsPerPage).then((res => res.json())),
-//     ]).then((results) => {
-//         const count = results[0];
-//         const users = results[1];
-//     });
-// }
-
-form.addEventListener('submit',(ev)=>{
-    addNewUser().then((response) => {
-        console.log(response);
-            response.json().then((data) => {
-                console.log('tutaj: ', data);
-            });
-        })
-    event.preventDefault();
-})

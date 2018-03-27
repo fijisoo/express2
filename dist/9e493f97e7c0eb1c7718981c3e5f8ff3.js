@@ -71,7 +71,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({12:[function(require,module,exports) {
+})({6:[function(require,module,exports) {
 "use strict";
 
 exports.__esModule = true;
@@ -97,20 +97,20 @@ var model_1 = require("./model");
 var user = new model_1.User();
 var pageNumber = 0;
 function getUsersCounter() {
-    return fetch('/getUsers').then(function (response) {
+    return fetch('/usersCounter').then(function (response) {
         return response.json().then(function (data) {
-            return { response: response, data: data };
+            return data;
         });
-    }).then(function (res) {
-        console.log('response code: ', res.response, 'data: ', res.data);
     })["catch"](function (err) {
         return console.log;
     });
 }
 function getUsersPerPage(pageNumber, numberOfElements) {
     numberOfElements = Math.max(1, numberOfElements);
-    var firstSemafor = 1 + numberOfElements * pageNumber;
+    // pageNumber = Math.max(1, pageNumber);
+    var firstSemafor = numberOfElements * pageNumber;
     var secondSemafor = numberOfElements + numberOfElements * pageNumber;
+    console.log('firstSemafor: ', firstSemafor, 'secondSemafor: ', secondSemafor);
     return fetch("/getUsers?firstSemafor=" + firstSemafor + "&secondSemafor=" + secondSemafor).then(function (response) {
         return response.json().then(function (data) {
             return { response: response, data: data };
@@ -119,6 +119,62 @@ function getUsersPerPage(pageNumber, numberOfElements) {
         return console.log;
     });
 }
+var generateUsersTable = function generateUsersTable(arr, tBodyElement) {
+    while (tBodyElement.firstChild) {
+        tBodyElement.removeChild(tBodyElement.firstChild);
+    }
+    arr.forEach(function (obj, index) {
+        var trElement = document.createElement('tr');
+        var thElement = document.createElement('th');
+        thElement.innerHTML = index;
+        trElement.appendChild(thElement);
+        tBodyElement.appendChild(trElement);
+        for (var i in obj) {
+            var thElement_1 = document.createElement('th');
+            thElement_1.innerHTML = obj[i];
+            trElement.appendChild(thElement_1);
+            tbody.appendChild(trElement);
+        }
+    });
+};
+var generatePagination = function generatePagination(counter, numberOfElements, element) {
+    var buttonCounter = parseInt(counter) / parseInt(numberOfElements);
+    while (element.firstChild) {
+        element.removeChild(element.firstChild);
+    }
+    for (var i = 0; i < buttonCounter; i++) {
+        var input = document.createElement('input');
+        input.type = 'button';
+        input.innerText = "" + i;
+        input.value = "" + i;
+        input.addEventListener('click', function (ev) {
+            showUsers(this.value, 4);
+        });
+        element.appendChild(input);
+    }
+};
+var tbody = document.querySelector('.table tbody');
+var paginEl = document.querySelector('.pagin');
+var showUsers = function showUsers(pageNumber, numberOfElements) {
+    return Promise.all([getUsersCounter(), getUsersPerPage(pageNumber, numberOfElements)]).then(function (res) {
+        var counter = res[0];
+        var usersArr = res[1].data;
+        console.log('users Arr :', usersArr);
+        generateUsersTable(usersArr, tbody);
+        generatePagination(counter, numberOfElements, paginEl);
+    });
+};
+showUsers(0, 4);
+var form = document.getElementById('formularz');
+form.addEventListener('submit', function (ev) {
+    addNewUser().then(function (response) {
+        console.log(response);
+        response.json().then(function (data) {
+            console.log('tutaj: ', data);
+        });
+    });
+    event.preventDefault();
+});
 function addNewUser() {
     var inputElements = document.querySelectorAll('#formularz input');
     return new Promise(function (resolve, reject) {
@@ -133,71 +189,11 @@ function addNewUser() {
             },
             body: JSON.stringify(data)
         });
+    }).then(function (res) {
+        showUsers(0, 4);
     });
 }
-var showUsers = function showUsers() {
-    return Promise.all([getUsersCounter().then(function (res) {
-        return res.json();
-    }, getUsersPerPage(1, 1).then(function (res) {
-        return res.json();
-    }))]);
-};
-// let showUsers = function (){
-//         let tbody = document.querySelector('.table tbody');
-//         while (tbody.firstChild) {
-//             tbody.removeChild(tbody.firstChild);
-//         }
-//         fetch('/getUsers').then((data)=>{
-//             data.json().then(function (data){
-//                 console.log(JSON.stringify(data));
-//                 let paginDiv = document.querySelector('.pagin');
-//                 let newP = document.createElement('p');
-//                 newP.innerText = '' + data;
-//                 paginDiv.appendChild(newP);
-//             })
-//         })
-//
-//         fetch(`/getUsers/` + pageNumber).then(function (data){
-//             data.json().then(function (data){
-//                 data.forEach((obj, index)=>{
-//                     const trElement = document.createElement('tr');
-//                     const thElement = document.createElement('th');
-//                     thElement.innerHTML = index;
-//                     trElement.appendChild(thElement);
-//                     tbody.appendChild(trElement);
-//                     for(let i in obj){
-//                         const thElement = document.createElement('th');
-//                         thElement.innerHTML = obj[i];
-//                         trElement.appendChild(thElement);
-//                         tbody.appendChild(trElement);
-//                     }
-//                 })
-//             });
-//         })
-// };
-//
-// window.addEventListener("load", showUsers);
-var form = document.getElementById('formularz');
-// function example(currentPage = 0, elementsPerPage = 10) {
-//     elementsPerPage = Math.max(1, elementsPerPage);
-//     Promise.all([
-//         fetch('/usersCount').then((res => res.json())),
-//         fetch('/users?page=' + currentPage + '&elementsPerPage=' + elementsPerPage).then((res => res.json())),
-//     ]).then((results) => {
-//         const count = results[0];
-//         const users = results[1];
-//     });
-// }
-form.addEventListener('submit', function (ev) {
-    addNewUser().then(function (response) {
-        console.log(response);
-        response.json().then(function (data) {
-            console.log('tutaj: ', data);
-        });
-    });
-    event.preventDefault();
-});
-},{"./model":12}],11:[function(require,module,exports) {
+},{"./model":6}],8:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -219,7 +215,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '61159' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '57455' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -320,5 +316,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[11,3])
+},{}]},{},[8,3])
 //# sourceMappingURL=/9e493f97e7c0eb1c7718981c3e5f8ff3.map

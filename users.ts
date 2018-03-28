@@ -2,15 +2,19 @@ import {User} from './model';
 
 let user = new User();
 
-let pageNumber = 0;
-let tbody = document.querySelector('.table tbody');
-let paginEl = document.querySelector('.pagin');
-let form = document.getElementById('formularz');
-let slider = document.querySelector('.slidecontainer');
+const tbody = document.querySelector('.table tbody');
+const paginEl = document.querySelector('.pagin');
+const form = document.getElementById('formularz');
+const slider = document.querySelector('.slidecontainer');
 
 let currentPage = 0;
 let elementsPerPage = 5;
 
+function removeChildElements(parentEl){
+    while (parentEl.firstChild) {
+        parentEl.removeChild(parentEl.firstChild);
+    }
+}
 
 function getUsersCounter (): Promise<any>{
     return fetch('/usersCounter')
@@ -21,7 +25,7 @@ function getUsersCounter (): Promise<any>{
         .catch(err => console.log);
 }
 
-function getUsersPerPage (pageNumber: number, numberOfElements: number){
+function getUsersPerPage (pageNumber: number, numberOfElements: number): Promise<any>{
     numberOfElements = Math.max(1, numberOfElements);
 
     let firstSemafor = numberOfElements * pageNumber;
@@ -34,13 +38,12 @@ function getUsersPerPage (pageNumber: number, numberOfElements: number){
 }
 
 let generateUsersTable = function (arr, tBodyElement) {
-    while (tBodyElement.firstChild) {
-        tBodyElement.removeChild(tBodyElement.firstChild);
-    }
+    removeChildElements(tBodyElement);
+    let lastIndex = elementsPerPage;
     arr.forEach((obj, index)=>{
         const trElement = document.createElement('tr');
         const thElement = document.createElement('th');
-        thElement.innerHTML = index;
+        thElement.innerHTML = (parseInt(index) + 1 + (currentPage * lastIndex)).toString();
         trElement.appendChild(thElement);
         tBodyElement.appendChild(trElement);
         for(let i in obj){
@@ -53,12 +56,9 @@ let generateUsersTable = function (arr, tBodyElement) {
 }
 
 let generateSlider = function(){
-
     let input = document.createElement('input');
     let sliderVal = document.getElementById('slidecontainerval');
-    while (slider.firstChild) {
-        slider.removeChild(slider.firstChild);
-    }
+    removeChildElements(slider);
     input.type = 'range';
     input.min = '1';
     getUsersCounter().then((res)=>{
@@ -72,18 +72,39 @@ let generateSlider = function(){
         sliderVal.value = this.value;
         showUsers();
     })
-    // console.log(input);
     slider.appendChild(input);
-    // console.log(slider);
 }
 
 window.onload = generateSlider;
 
-let generatePagination = function (counter, numberOfElements, element){
-    let buttonCounter = parseInt(counter)/parseInt(numberOfElements);
-    while (element.firstChild) {
-        element.removeChild(element.firstChild);
+let generateNextBackButtons = function(parent, value, text, buttonCounter){
+    let input = document.createElement('input');
+    input.type = 'button';
+    input.innerText = text;
+    input.value = text;
+    if(value >= 0 && value < buttonCounter){
+        console.log('value: ', value, 'elementsPerPage: ', elementsPerPage);
+        input.addEventListener('click', function(ev){
+            currentPage = value;
+            showUsers();
+        });
+    }else{
+        input.removeEventListener('click', function(ev){
+            currentPage = value;
+            showUsers();
+        })
     }
+    parent.appendChild(input);
+}
+
+let generatePagination = function(counter, numberOfElements, element){
+    let buttonCounter = parseInt(counter)/parseInt(numberOfElements);
+    removeChildElements(element);
+
+    if(buttonCounter > 2){
+        generateNextBackButtons(element, currentPage - 1, '<<', buttonCounter);
+    }
+
     for(let i = 0; i < buttonCounter; i++){
         let input = document.createElement('input');
         input.type = 'button';
@@ -92,12 +113,16 @@ let generatePagination = function (counter, numberOfElements, element){
         input.addEventListener('click', function(ev){
             currentPage = parseInt(this.value);
             showUsers();
-        } )
+        });
         element.appendChild(input);
+    }
+
+    if(buttonCounter > 2){
+        generateNextBackButtons(element, currentPage + 1, '>>', buttonCounter);
     }
 }
 
-let showUsers = function () {
+let showUsers = function():Promise<any> {
     return Promise.all([
         getUsersCounter(),
         getUsersPerPage(currentPage,elementsPerPage)
@@ -107,11 +132,10 @@ let showUsers = function () {
         console.log('users Arr :', usersArr);
         generateUsersTable(usersArr, tbody);
         generatePagination(counter, elementsPerPage, paginEl);
-
     })
 }
 
-showUsers().catch(err=>console.log);
+showUsers().catch(err => console.log);
 
 form.addEventListener('submit',(ev)=>{
     addNewUser().then((response) => {
@@ -123,7 +147,7 @@ form.addEventListener('submit',(ev)=>{
     event.preventDefault();
 })
 
-function addNewUser (): Promise<any>{
+function addNewUser(): Promise<any>{
     let inputElements = document.querySelectorAll('#formularz input');
     return new Promise(function (resolve, reject){
         let newUser = user.addUser((<HTMLInputElement>inputElements[0]).value,
@@ -142,7 +166,7 @@ function addNewUser (): Promise<any>{
             },
             body: JSON.stringify(data)
         })
-    }).then((res)=>{
+    }).then(()=>{
         showUsers();
         generateSlider();
     });

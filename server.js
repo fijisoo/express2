@@ -4,20 +4,7 @@ var _ = require('lodash');
 var app = express();
 var path = require("path");
 
-let users = [
-    {"name":"qweqwe","surname":"awdawd","age":1},
-    {"name":"qweqwe","surname":"awdawd","age":2},
-    {"name":"qweqwe","surname":"awdawd","age":3},
-    {"name":"qweqwe","surname":"awdawd","age":4},
-    {"name":"qweqwe","surname":"awdawd","age":5},
-    {"name":"qweqwe","surname":"awdawd","age":6},
-    {"name":"qweqwe","surname":"awdawd","age":7},
-    {"name":"qweqwe","surname":"awdawd","age":8},
-    {"name":"qweqwe","surname":"awdawd","age":9},
-    {"name":"qweqwe","surname":"awdawd","age":10},
-    {"name":"qweqwe","surname":"awdawd","age":11},
-    {"name":"qweqwe","surname":"awdawd","age":12}
-    ];
+let users = [];
 
 let paginUsers = _.chunk(users, 5);
 
@@ -45,8 +32,6 @@ app.post('/addUser', function(req, res){
 
 app.get('/getUsers?', function(req,res){
     let query = req.query;
-    console.log('query.firstSemafor: ', query.firstSemafor, 'query.secondSemafor: ', query.secondSemafor - 1);
-    console.log(' cokolwiek: ',users.slice(query.firstSemafor, query.secondSemafor));
     res.send(users.slice(query.firstSemafor, query.secondSemafor).map(function(x){
         return {
             name: x.name,

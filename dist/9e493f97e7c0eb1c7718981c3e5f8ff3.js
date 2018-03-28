@@ -71,7 +71,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({6:[function(require,module,exports) {
+})({8:[function(require,module,exports) {
 "use strict";
 
 exports.__esModule = true;
@@ -95,13 +95,17 @@ exports.User = User;
 exports.__esModule = true;
 var model_1 = require("./model");
 var user = new model_1.User();
-var pageNumber = 0;
 var tbody = document.querySelector('.table tbody');
 var paginEl = document.querySelector('.pagin');
 var form = document.getElementById('formularz');
 var slider = document.querySelector('.slidecontainer');
 var currentPage = 0;
 var elementsPerPage = 5;
+function removeChildElements(parentEl) {
+    while (parentEl.firstChild) {
+        parentEl.removeChild(parentEl.firstChild);
+    }
+}
 function getUsersCounter() {
     return fetch('/usersCounter').then(function (response) {
         return response.json().then(function (data) {
@@ -124,13 +128,12 @@ function getUsersPerPage(pageNumber, numberOfElements) {
     });
 }
 var generateUsersTable = function generateUsersTable(arr, tBodyElement) {
-    while (tBodyElement.firstChild) {
-        tBodyElement.removeChild(tBodyElement.firstChild);
-    }
+    removeChildElements(tBodyElement);
+    var lastIndex = elementsPerPage;
     arr.forEach(function (obj, index) {
         var trElement = document.createElement('tr');
         var thElement = document.createElement('th');
-        thElement.innerHTML = index;
+        thElement.innerHTML = (parseInt(index) + 1 + currentPage * lastIndex).toString();
         trElement.appendChild(thElement);
         tBodyElement.appendChild(trElement);
         for (var i in obj) {
@@ -144,9 +147,7 @@ var generateUsersTable = function generateUsersTable(arr, tBodyElement) {
 var generateSlider = function generateSlider() {
     var input = document.createElement('input');
     var sliderVal = document.getElementById('slidecontainerval');
-    while (slider.firstChild) {
-        slider.removeChild(slider.firstChild);
-    }
+    removeChildElements(slider);
     input.type = 'range';
     input.min = '1';
     getUsersCounter().then(function (res) {
@@ -160,15 +161,33 @@ var generateSlider = function generateSlider() {
         sliderVal.value = this.value;
         showUsers();
     });
-    // console.log(input);
     slider.appendChild(input);
-    // console.log(slider);
 };
 window.onload = generateSlider;
+var generateNextBackButtons = function generateNextBackButtons(parent, value, text, buttonCounter) {
+    var input = document.createElement('input');
+    input.type = 'button';
+    input.innerText = text;
+    input.value = text;
+    if (value >= 0 && value < buttonCounter) {
+        console.log('value: ', value, 'elementsPerPage: ', elementsPerPage);
+        input.addEventListener('click', function (ev) {
+            currentPage = value;
+            showUsers();
+        });
+    } else {
+        input.removeEventListener('click', function (ev) {
+            currentPage = value;
+            showUsers();
+        });
+    }
+    parent.appendChild(input);
+};
 var generatePagination = function generatePagination(counter, numberOfElements, element) {
     var buttonCounter = parseInt(counter) / parseInt(numberOfElements);
-    while (element.firstChild) {
-        element.removeChild(element.firstChild);
+    removeChildElements(element);
+    if (buttonCounter > 2) {
+        generateNextBackButtons(element, currentPage - 1, '<<', buttonCounter);
     }
     for (var i = 0; i < buttonCounter; i++) {
         var input = document.createElement('input');
@@ -180,6 +199,9 @@ var generatePagination = function generatePagination(counter, numberOfElements, 
             showUsers();
         });
         element.appendChild(input);
+    }
+    if (buttonCounter > 2) {
+        generateNextBackButtons(element, currentPage + 1, '>>', buttonCounter);
     }
 };
 var showUsers = function showUsers() {
@@ -217,12 +239,12 @@ function addNewUser() {
             },
             body: JSON.stringify(data)
         });
-    }).then(function (res) {
+    }).then(function () {
         showUsers();
         generateSlider();
     });
 }
-},{"./model":6}],13:[function(require,module,exports) {
+},{"./model":8}],9:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -244,7 +266,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '57455' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '63748' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -345,5 +367,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[13,3])
+},{}]},{},[9,3])
 //# sourceMappingURL=/9e493f97e7c0eb1c7718981c3e5f8ff3.map

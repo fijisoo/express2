@@ -1,36 +1,44 @@
 export interface userModel {
-    addUser(name: string, surname: string, age: number, login:string, pass:string);
+    name: string;
+    surname: string;
+    age: number;
+    login:string;
+    pass:string;
+
+    sendUserObject():{name: string,
+        surname: string,
+        age: number,
+        login:string,
+        pass:string
+    }
 }
 
-export class User{
-    constructor(){}
-    public static addUser(name: string, surname: string, age: number, login:string, pass:string){
+export class User implements userModel{
+    name;
+    surname;
+    age;
+    login;
+    pass;
+
+    constructor(name: string, surname: string, age: number, login:string, pass:string){
+        this.name = name;
+        this.surname = surname;
+        this.age = age;
+        this.login = login;
+        this.pass = pass;
+    }
+
+    sendUserObject(){
         return{
-            name: name,
-            surname: surname,
-            age: age,
-            login: login,
-            pass: pass
+            name: this.name,
+            surname: this.surname,
+            age: this.age,
+            login: this.login,
+            pass: this.pass
         }
     }
 
-    postUser(name: string, surname: string, age: number, login:string, pass:string): Promise<any> {
-        return new Promise((resolve, reject) => {
-            let newUser = User.addUser(name, surname, age, login, pass);
-            resolve(newUser);
-        }).then((data) => {
-            return fetch("/addUser", {
-                method: "post",
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-        });
-    }
-
-    getUsersCounter (): Promise<any>{
+    static getUsersCounter (): Promise<any>{
         return fetch('/usersCounter')
             .then(response => response.json()
                 .then((data)=>{
@@ -39,7 +47,7 @@ export class User{
             .catch(err => console.log);
     }
 
-    getUsersPerPage (obj:{currentPage: number, elementsPerPage: number}): Promise<any>{
+    static getUsersPerPage (obj:{currentPage: number, elementsPerPage: number}): Promise<any>{
         obj.elementsPerPage = Math.max(1, obj.elementsPerPage);
 
         let firstSemafor = obj.elementsPerPage * obj.currentPage;

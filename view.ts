@@ -1,4 +1,6 @@
 import {Utilities} from './utilities';
+import {User} from "./model";
+
 let utility = new Utilities();
 
 let generatePagination = function (counter, numberOfElements, element, pageData, callback) {
@@ -53,7 +55,7 @@ let generateSlider = function (sliderEl, sliderVal, user: User, pageData, callba
     utility.removeChildElements(sliderEl);
     input.type = 'range';
     input.min = '1';
-    user.getUsersCounter().then((res) => {
+    User.getUsersCounter().then((res) => {
         input.max = res;
     });
     input.value = '1';

@@ -4,6 +4,7 @@ export class Utilities{
     constructor(){};
 
     removeChildElements(parentEl){
+        console.log('tajpof', typeof parentEl);
         while (parentEl.firstChild) {
             parentEl.removeChild(parentEl.firstChild);
         }
@@ -54,12 +55,12 @@ export class Utilities{
         parent.appendChild(input);
     }
 
-    generateSlider(sliderEl, sliderVal, user: User, pageData, callback) {
+    generateSlider(sliderEl, sliderVal, pageData, callback) {
         let input = document.createElement('input');
         this.removeChildElements(sliderEl);
         input.type = 'range';
         input.min = '1';
-        user.getUsersCounter().then((res) => {
+        User.getUsersCounter().then((res) => {
             input.max = res;
         });
         input.value = '1';
@@ -86,7 +87,7 @@ export class Utilities{
                 const thElement = document.createElement('th');
                 thElement.innerHTML = obj[i];
                 trElement.appendChild(thElement);
-                tBodyElement.appendChild(trElement);//czy napewno nie tbody
+                tBodyElement.appendChild(trElement);
             }
         })
     }

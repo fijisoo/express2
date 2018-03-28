@@ -6,8 +6,6 @@ var path = require("path");
 
 let users = [];
 
-let paginUsers = _.chunk(users, 5);
-
 app.use('/', express.static(path.join(__dirname, '/dist/')));
 app.use(bodyParser.json());
 

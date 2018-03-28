@@ -77,7 +77,7 @@ require = (function (modules, cache, entry) {
 exports.__esModule = true;
 var User = /** @class */function () {
     function User() {}
-    User.prototype.addUser = function (name, surname, age, login, pass) {
+    User.addUser = function (name, surname, age, login, pass) {
         return {
             name: name,
             surname: surname,
@@ -86,165 +86,176 @@ var User = /** @class */function () {
             pass: pass
         };
     };
+    User.prototype.postUser = function (name, surname, age, login, pass) {
+        return new Promise(function (resolve, reject) {
+            var newUser = User.addUser(name, surname, age, login, pass);
+            resolve(newUser);
+        }).then(function (data) {
+            return fetch("/addUser", {
+                method: "post",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+        });
+    };
+    User.prototype.getUsersCounter = function () {
+        return fetch('/usersCounter').then(function (response) {
+            return response.json().then(function (data) {
+                return data;
+            });
+        })["catch"](function (err) {
+            return console.log;
+        });
+    };
+    User.prototype.getUsersPerPage = function (obj) {
+        obj.elementsPerPage = Math.max(1, obj.elementsPerPage);
+        var firstSemafor = obj.elementsPerPage * obj.currentPage;
+        var secondSemafor = obj.elementsPerPage + obj.elementsPerPage * obj.currentPage;
+        return fetch("/getUsers?firstSemafor=" + firstSemafor + "&secondSemafor=" + secondSemafor).then(function (response) {
+            return response.json().then(function (data) {
+                return { response: response, data: data };
+            });
+        })["catch"](function (err) {
+            return console.log;
+        });
+    };
     return User;
 }();
 exports.User = User;
+},{}],11:[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+var Utilities = /** @class */function () {
+    function Utilities() {}
+    ;
+    Utilities.prototype.removeChildElements = function (parentEl) {
+        while (parentEl.firstChild) {
+            parentEl.removeChild(parentEl.firstChild);
+        }
+    };
+    Utilities.prototype.generatePagination = function (counter, element, pageData, callback) {
+        var buttonCounter = parseInt(counter) / parseInt(pageData.numberOfElements);
+        this.removeChildElements(element);
+        if (buttonCounter > 2) {
+            this.generateNextBackButtons(element, pageData.currentPage - 1, '<<', buttonCounter, pageData, callback);
+        }
+        for (var i = 0; i < buttonCounter; i++) {
+            var input = document.createElement('input');
+            input.type = 'button';
+            input.innerText = "" + i;
+            input.value = "" + i;
+            input.addEventListener('click', function (ev) {
+                pageData.currentPage = parseInt(this.value);
+                callback();
+            });
+            element.appendChild(input);
+        }
+        if (buttonCounter > 2) {
+            this.generateNextBackButtons(element, pageData.currentPage + 1, '>>', buttonCounter, pageData, callback);
+        }
+    };
+    Utilities.prototype.generateNextBackButtons = function (parent, value, text, buttonCounter, pageData, callback) {
+        var input = document.createElement('input');
+        input.type = 'button';
+        input.innerText = text;
+        input.value = text;
+        if (value >= 0 && value < buttonCounter) {
+            console.log('value: ', value, 'elementsPerPage: ', pageData.elementsPerPage);
+            input.addEventListener('click', function (ev) {
+                pageData.currentPage = value;
+                callback(); //showUser();
+            });
+        } else {
+            input.removeEventListener('click', function (ev) {
+                pageData.currentPage = value;
+                callback(); //showUser();
+            });
+        }
+        parent.appendChild(input);
+    };
+    Utilities.prototype.generateSlider = function (sliderEl, sliderVal, user, pageData, callback) {
+        var input = document.createElement('input');
+        this.removeChildElements(sliderEl);
+        input.type = 'range';
+        input.min = '1';
+        user.getUsersCounter().then(function (res) {
+            input.max = res;
+        });
+        input.value = '1';
+        input.className = 'slider';
+        input.id = 'myRange';
+        input.addEventListener('change', function (ev) {
+            pageData.elementsPerPage = parseInt(this.value);
+            sliderVal.value = this.value;
+            callback();
+        });
+        sliderEl.appendChild(input);
+    };
+    Utilities.prototype.generateUsersTable = function (arr, tBodyElement, pageData) {
+        this.removeChildElements(tBodyElement);
+        var lastIndex = pageData.elementsPerPage;
+        arr.forEach(function (obj, index) {
+            var trElement = document.createElement('tr');
+            var thElement = document.createElement('th');
+            thElement.innerHTML = (parseInt(index) + 1 + pageData.currentPage * lastIndex).toString();
+            trElement.appendChild(thElement);
+            tBodyElement.appendChild(trElement);
+            for (var i in obj) {
+                var thElement_1 = document.createElement('th');
+                thElement_1.innerHTML = obj[i];
+                trElement.appendChild(thElement_1);
+                tBodyElement.appendChild(trElement); //czy napewno nie tbody
+            }
+        });
+    };
+    return Utilities;
+}();
+exports.Utilities = Utilities;
 },{}],3:[function(require,module,exports) {
 "use strict";
 
 exports.__esModule = true;
 var model_1 = require("./model");
+var utilities_1 = require("./utilities");
 var user = new model_1.User();
+var utility = new utilities_1.Utilities();
 var tbody = document.querySelector('.table tbody');
 var paginEl = document.querySelector('.pagin');
 var form = document.getElementById('formularz');
 var slider = document.querySelector('.slidecontainer');
+var sliderVal = document.getElementById('slidecontainerval');
+var pageData = {
+    currentPage: 0,
+    elementsPerPage: 5
+};
 var currentPage = 0;
 var elementsPerPage = 5;
-function removeChildElements(parentEl) {
-    while (parentEl.firstChild) {
-        parentEl.removeChild(parentEl.firstChild);
-    }
-}
-function getUsersCounter() {
-    return fetch('/usersCounter').then(function (response) {
-        return response.json().then(function (data) {
-            return data;
-        });
-    })["catch"](function (err) {
-        return console.log;
-    });
-}
-function getUsersPerPage(pageNumber, numberOfElements) {
-    numberOfElements = Math.max(1, numberOfElements);
-    var firstSemafor = numberOfElements * pageNumber;
-    var secondSemafor = numberOfElements + numberOfElements * pageNumber;
-    return fetch("/getUsers?firstSemafor=" + firstSemafor + "&secondSemafor=" + secondSemafor).then(function (response) {
-        return response.json().then(function (data) {
-            return { response: response, data: data };
-        });
-    })["catch"](function (err) {
-        return console.log;
-    });
-}
-var generateUsersTable = function generateUsersTable(arr, tBodyElement) {
-    removeChildElements(tBodyElement);
-    var lastIndex = elementsPerPage;
-    arr.forEach(function (obj, index) {
-        var trElement = document.createElement('tr');
-        var thElement = document.createElement('th');
-        thElement.innerHTML = (parseInt(index) + 1 + currentPage * lastIndex).toString();
-        trElement.appendChild(thElement);
-        tBodyElement.appendChild(trElement);
-        for (var i in obj) {
-            var thElement_1 = document.createElement('th');
-            thElement_1.innerHTML = obj[i];
-            trElement.appendChild(thElement_1);
-            tbody.appendChild(trElement);
-        }
-    });
-};
-var generateSlider = function generateSlider() {
-    var input = document.createElement('input');
-    var sliderVal = document.getElementById('slidecontainerval');
-    removeChildElements(slider);
-    input.type = 'range';
-    input.min = '1';
-    getUsersCounter().then(function (res) {
-        input.max = res;
-    });
-    input.value = '1';
-    input.className = 'slider';
-    input.id = 'myRange';
-    input.addEventListener('change', function (ev) {
-        elementsPerPage = parseInt(this.value);
-        sliderVal.value = this.value;
+form.addEventListener('submit', function (ev) {
+    var inputElements = document.querySelectorAll('#formularz input');
+    user.postUser(inputElements[0].value, inputElements[1].value, parseInt(inputElements[2].value), inputElements[3].value, inputElements[4].value).then(function () {
         showUsers();
+        generateSlider();
     });
-    slider.appendChild(input);
-};
-window.onload = generateSlider;
-var generateNextBackButtons = function generateNextBackButtons(parent, value, text, buttonCounter) {
-    var input = document.createElement('input');
-    input.type = 'button';
-    input.innerText = text;
-    input.value = text;
-    if (value >= 0 && value < buttonCounter) {
-        console.log('value: ', value, 'elementsPerPage: ', elementsPerPage);
-        input.addEventListener('click', function (ev) {
-            currentPage = value;
-            showUsers();
-        });
-    } else {
-        input.removeEventListener('click', function (ev) {
-            currentPage = value;
-            showUsers();
-        });
-    }
-    parent.appendChild(input);
-};
-var generatePagination = function generatePagination(counter, numberOfElements, element) {
-    var buttonCounter = parseInt(counter) / parseInt(numberOfElements);
-    removeChildElements(element);
-    if (buttonCounter > 2) {
-        generateNextBackButtons(element, currentPage - 1, '<<', buttonCounter);
-    }
-    for (var i = 0; i < buttonCounter; i++) {
-        var input = document.createElement('input');
-        input.type = 'button';
-        input.innerText = "" + i;
-        input.value = "" + i;
-        input.addEventListener('click', function (ev) {
-            currentPage = parseInt(this.value);
-            showUsers();
-        });
-        element.appendChild(input);
-    }
-    if (buttonCounter > 2) {
-        generateNextBackButtons(element, currentPage + 1, '>>', buttonCounter);
-    }
-};
+    event.preventDefault();
+});
 var showUsers = function showUsers() {
-    return Promise.all([getUsersCounter(), getUsersPerPage(currentPage, elementsPerPage)]).then(function (res) {
+    return Promise.all([user.getUsersCounter(), user.getUsersPerPage(currentPage, elementsPerPage)]).then(function (res) {
         var counter = res[0];
         var usersArr = res[1].data;
         console.log('users Arr :', usersArr);
         generateUsersTable(usersArr, tbody);
         generatePagination(counter, elementsPerPage, paginEl);
+    })["catch"](function (err) {
+        return console.log;
     });
 };
-showUsers()["catch"](function (err) {
-    return console.log;
-});
-form.addEventListener('submit', function (ev) {
-    addNewUser().then(function (response) {
-        console.log(response);
-        response.json().then(function (data) {
-            console.log('tutaj: ', data);
-        });
-    });
-    event.preventDefault();
-});
-function addNewUser() {
-    var inputElements = document.querySelectorAll('#formularz input');
-    return new Promise(function (resolve, reject) {
-        var newUser = user.addUser(inputElements[0].value, inputElements[1].value, parseInt(inputElements[2].value), inputElements[3].value, inputElements[4].value);
-        resolve(newUser);
-    }).then(function (data) {
-        return fetch("/addUser", {
-            method: "post",
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-    }).then(function () {
-        showUsers();
-        generateSlider();
-    });
-}
-},{"./model":8}],9:[function(require,module,exports) {
+window.onload = generateSlider;
+showUsers();
+},{"./model":8,"./utilities":11}],9:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
